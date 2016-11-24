@@ -1,31 +1,36 @@
 #!/bin/bash
 #
 #	v1.24-1
-#	Text2JGrammar
-#	USO: ./Text2JGrammar.sh <texto especificador>
-#	Parse TEXT PLAIN para JFLAP Grammar (XML)
+#	Text2JGrammar - Parse TEXT PLAIN para JFLAP Grammar (XML)
+#
+#	USO:	$ ./Text2JGrammar.sh "<texto formatado>"
+#	EXEMPLO:$ ./Text2JGrammar.sh "P > 0P,1P,§; A > 0B; B > 1; B>0"
+# 
 #	Created by Micael Levi on 11/24/2016
 #	Copyright (c) 2016 mllc@icomp.ufam.edu.br; All rights reserved.
 #
-#
 
 
-## Formato:
+## Especificação do Formato:
 : '
 - As implicâncias (setas) são indicadas por ">"
 - As regras são separadas por ";"
 - O pipe (barra vertical) é indicado por ","
-- O lambda é indicado por um espaço (ou simplesmente ausência de caractere)
+- O lambda é indicado por "§"
 - Caso algum terminal seja igual a alguma keyword, coloque-o entre aspas
 '
+
+[ $# -ne 1 ] && exit
+entrada="$1" #entrada="P > 0P,1P,§; A > 0B; B > 1"
 
 
 shopt -s compat31
 IFS_BKP="$IFS"
 
-entrada="P > 0P,1P,1A; A > 0B; B > 1" #==> entrada="P > 0P; P>1P; P>1A; A > 0B; B > 1"
 
 ############################[ CONSTANTES ]#######################################
+IMPLICACAO='>'
+LAMBDA='§'
 DELIM_REGRAS=';'
 DELIM_SEQUENCIAS=','
 
@@ -39,7 +44,8 @@ BODY=()
 ################################################################################
 
 
-function join_by { local IFS="$1"; shift; echo "$*"; } #==> function join_by { local d=$1; shift; echo -n "$1"; shift; printf "%s" "${@/#/$d}"; }
+#function join_by { local IFS="$1"; shift; echo "$*"; } #==> function join_by { local d=$1; shift; echo -n "$1"; shift; printf "%s" "${@/#/$d}"; }
+function join_by { local d=$1; shift; echo -n "$1"; shift; printf "%s" "${@/#/$d}"; }
 
 
 
@@ -56,7 +62,7 @@ do
 	IFS=$DELIM_REGRAS
 
 	## Definindo variaveis e sequências (separa variavel e sequencia):
-	regra=`sed -r "s/^(\w+?)>(.+)$/\1${DELIM_REGRAS}\2/" <<< ${regra}`
+	regra=$(sed -r "s/^(\w+?)>(.+)$/\1${DELIM_REGRAS}\2/" <<< ${regra})
 	read -ra arr_regra <<< "$regra"
 	[ ${#arr_regra[@]} -ne 2 ] && exit
 
@@ -75,11 +81,11 @@ do
 		## Loop para cada sequencia relacionada a mesma variavel	
 		for i in ${!arr_sequencias[@]}; do
 			sequencia="${arr_sequencias[$i]}"
-			sequencia="\t\t<right>${sequencia}</right>&#13;"
+			[[ $sequencia =~ $LAMBDA ]] && sequencia="\t\t<right/>&#13;" || sequencia="\t\t<right>${sequencia}</right>&#13;"
 			arr_sequencias[$i]="\t<production>&#13;\n${variavel}\n${sequencia}\n\t</production>&#13;"
 		done
 
-		REGRA=`join_by $'\n' ${arr_sequencias[@]}`
+		REGRA=$(join_by $'\\n' ${arr_sequencias[@]})
 
 	else
 		sequencia="\t\t<right>${sequencias}</right>&#13;"
