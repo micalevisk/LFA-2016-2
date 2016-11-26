@@ -10,6 +10,7 @@
 #	Copyright (c) 2016 mllc@icomp.ufam.edu.br; All rights reserved.
 #
 
+## FIXME possibilidade de definição de keywords ao chamar função específica.
 ## TODO otimizar para ler da STDIN (leitura de arquivo onde delimitador de regras são as quebras de linha).
 ## TODO otimizar para identificar se a entrada está correta.
 ## TODO otimizar para formatar as regras de acordo com um tipo específico de gramática.
@@ -21,29 +22,58 @@
 - As regras são separadas por ";"
 - O pipe (barra vertical) é indicado por ","
 - O lambda é indicado por "§"
-- Caso algum símbolo seja igual a algum caractere especial, altere a keyword na função principal
+- Caso algum símbolo seja igual a algum caractere especial, execute a função "Text2JGrammar.changekeywords"
 '
+
+########## [KEYWORDS] ##########
+IMPLICACAO='>'
+LAMBDA='§'
+DELIM_REGRAS=';'
+DELIM_SEQUENCIAS=','
+################################
 
 #function join_by { local IFS="$1"; shift; echo "$*"; }
 function skillJFlap_joinBy { local d=$1; shift; echo -n "$1"; shift; printf "%s" "${@/#/$d}"; }
-function skillJFlap_help {
+function Text2JGrammar_help
+{
 	local DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/${FUNCNAME[1]}.sh"
 	grep -m1 -Pzo "(?<=: '\n)[^']*(?=')" "$DIR"
 }
 
 
+function Text2JGrammar_cls
+{
+		echo -e '\033[u'
+		echo -en "\ec"
+}
+
+
+function Text2JGrammar.changekeywords
+{
+	echo -e "DEFINA AS KEYWORDS (APENAS 1 CARACTERE):\n"
+	read -p "alias seta (>): " -n 1 -r IMPLICACAO; echo
+	read -p "alias lambda (§): " -n 1 -r LAMBDA; echo
+	read -p "alias separador de regras (;): " -n 1 -r DELIM_REGRAS; echo
+	read -p "alias separador de sequências  (;): " -n 1 -r DELIM_SEQUENCIAS; echo
+	Text2JGrammar_cls
+}
+
+
+function Text2JGrammar.keywords
+{
+	echo $IMPLICACAO " (significa '->')"
+	echo $LAMBDA " (lambda)"
+	echo $DELIM_REGRAS " (significa quebra de linha)"
+	echo $DELIM_SEQUENCIAS " (significa '|')"
+}
+
+
+
 #### FUNÇÃO PRINCIPAL ####
 function Text2JGrammar
 {
-
-	[ $# -lt 1 ] && { skillJFlap_help ; return 1; }
+	[ $# -lt 1 ] && { Text2JGrammar_help ; return 1; }
 	
-	########## [KEYWORDS] ##########
-	local IMPLICACAO='>'
-	local LAMBDA='§'
-	local DELIM_REGRAS=';'
-	local DELIM_SEQUENCIAS=','
-	################################
 
 	#######################################[ CONSTANTES ]#######################################
 	local TOP="<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><!--Created with Text2JGrammar--><structure>&#13;\n\t<type>grammar</type>&#13;\n\t<!--The list of productions.-->&#13;"
@@ -56,8 +86,7 @@ function Text2JGrammar
 	[[ -e "$saida" ]] && {
 		read -p "Replace '${saida}' (y)? " -n 1 -r
 		[[ ! $REPLY =~ ^[Yy]$ ]] && return 2
-		echo -e '\033[u'
-		echo -en "\ec"
+		Text2JGrammar_cls
 	}
 
 	shopt -s compat31
@@ -121,8 +150,6 @@ function Text2JGrammar
 }
 	
 
-
-	
 	
 # (c) http://stackoverflow.com/questions/918886/how-do-i-split-a-string-on-a-delimiter-in-bash
 # (c) http://stackoverflow.com/questions/9792702/does-bash-support-word-boundary-regular-expressions
