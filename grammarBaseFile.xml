@@ -22,3 +22,13 @@
 		<right>1</right>&#13;
 	</production>&#13;
 </structure>
+<!--
+REPRESENTA:
+
+P -> 0P
+P -> 1P
+P -> 1A
+A -> 0B
+B -> 1
+
+-->

@@ -1,11 +1,11 @@
 #!/bin/bash
 #
-#	v1.24-1
-#	Text2JGrammar - Parse TEXT PLAIN para JFLAP Grammar (XML)
+#	v1.26-1
+#	Text2JGrammar - Parse PLAIN TEXT para JFLAP Grammar (XML)
 #
-#	USO:	$ ./Text2JGrammar.sh "<texto formatado>"
-#	EXEMPLO:$ ./Text2JGrammar.sh "P > 0P,1P,§; A > 0B; B > 1; B>0"
-# 
+#	USE:	$ ./Text2JGrammar.sh "<texto formatado>" [output-file]
+#	EXAMPLE:$ ./Text2JGrammar.sh "P > 0P,1P,1A; A > 0B; B > 1; B>0" mygrammar.jff
+#
 #	Created by Micael Levi on 11/24/2016
 #	Copyright (c) 2016 mllc@icomp.ufam.edu.br; All rights reserved.
 #
@@ -13,35 +13,43 @@
 
 ## Especificação do Formato:
 : '
-- As implicâncias (setas) são indicadas por ">"
+- As implicações (setas) são indicadas por ">"
 - As regras são separadas por ";"
 - O pipe (barra vertical) é indicado por ","
 - O lambda é indicado por "§"
-- Caso algum terminal seja igual a alguma keyword, coloque-o entre aspas
+- Caso algum símbolo seja igual a algum caractere especial, altere a keyword abaixo
 '
 
-[ $# -ne 1 ] && exit
-entrada="$1" #entrada="P > 0P,1P,§; A > 0B; B > 1"
+########## [KEYWORDS] ##########
+IMPLICACAO='>'
+LAMBDA='§'
+DELIM_REGRAS=';'
+DELIM_SEQUENCIAS=','
+################################
 
+
+[ $# -lt 1 ] && exit 1
+
+entrada="$1"
+saida="${2}"
+
+[[ -e "$saida" ]] && {
+	read -p "Replace '${saida}' (y)? " -n 1 -r
+	[[ ! $REPLY =~ ^[Yy]$ ]] && exit 2
+	echo -e '\033[u'
+	echo -en "\ec"
+}
 
 shopt -s compat31
 IFS_BKP="$IFS"
 
 
-############################[ CONSTANTES ]#######################################
-IMPLICACAO='>'
-LAMBDA='§'
-DELIM_REGRAS=';'
-DELIM_SEQUENCIAS=','
 
-
-TOP="<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><!--Created with Text2JGrammar--><structure>&#13;
-	<type>grammar</type>&#13;
-	<!--The list of productions.-->&#13;"
-DOWN="</structure>"
-
+#######################################[ CONSTANTES ]#######################################
+TOP="<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><!--Created with Text2JGrammar--><structure>&#13;\n\t<type>grammar</type>&#13;\n\t<!--The list of productions.-->&#13;"
 BODY=()
-################################################################################
+DOWN="</structure>"
+############################################################################################
 
 
 #function join_by { local IFS="$1"; shift; echo "$*"; } #==> function join_by { local d=$1; shift; echo -n "$1"; shift; printf "%s" "${@/#/$d}"; }
@@ -58,11 +66,11 @@ read -ra regras <<< "$entrada"
 
 ## Tratando as regras:
 for regra in "${regras[@]}"
-do	
+do
 	IFS=$DELIM_REGRAS
 
 	## Definindo variaveis e sequências (separa variavel e sequencia):
-	regra=$(sed -r "s/^(\w+?)>(.+)$/\1${DELIM_REGRAS}\2/" <<< ${regra})
+	regra=$(sed -r "s/^(\w+?)${IMPLICACAO}(.+)$/\1${DELIM_REGRAS}\2/" <<< ${regra})
 	read -ra arr_regra <<< "$regra"
 	[ ${#arr_regra[@]} -ne 2 ] && exit
 
@@ -72,13 +80,13 @@ do
 	## Montando linha do objeto <right> (sequencias):
 	## Verificar se possui multiplas sequencias e, caso tenha separa-as num array:
 	sequencias="${arr_regra[1]}"
-	if [[ $sequencias =~ \\b,\\b ]]
-	then	
+	if [[ $sequencias =~  ${DELIM_SEQUENCIAS} ]]
+	then
 		IFS=$DELIM_SEQUENCIAS
 		## Separando as sequencias (terminais e variaveis) em um array
 		read -ra arr_sequencias <<< "$sequencias"
-		
-		## Loop para cada sequencia relacionada a mesma variavel	
+
+		## Loop para cada sequencia relacionada a mesma variavel
 		for i in ${!arr_sequencias[@]}; do
 			sequencia="${arr_sequencias[$i]}"
 			[[ $sequencia =~ $LAMBDA ]] && sequencia="\t\t<right/>&#13;" || sequencia="\t\t<right>${sequencia}</right>&#13;"
@@ -97,10 +105,10 @@ do
 done
 
 
-
-
 ## EXIBIR RESULTADO:
-echo -e "$TOP\n${BODY[@]}\n$DOWN"
+RESULTADO="$TOP\n${BODY[@]}\n$DOWN"
+echo -e  "${RESULTADO}" | tee ${saida}
+
 IFS="$IFS_BKP"
 
 # (c) http://stackoverflow.com/questions/918886/how-do-i-split-a-string-on-a-delimiter-in-bash
