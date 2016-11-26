@@ -1,4 +1,5 @@
 # Text2JGrammar
+
 ### to download and change permission (_bash_):
 ```bash
 wget "https://raw.githubusercontent.com/micalevisk/LFA_feelings/master/Text2JGrammar.sh" &&
@@ -12,6 +13,11 @@ chmod +x "Text2JGrammar.sh"
 - O lambda é indicado por **§**
 - Caso algum símbolo seja igual a algum caractere especial, altere a _keyword_ no arquivo.
 
+### To Use (on terminal)
+```bash
+./Text2JGrammar.sh "P > 0P,1P,1A; A > 0B; B > 1; B>0" mygrammar.jff
+```
+
 ### e.g.:
 _this input plain text:_ ```P > 0P,1P,1A; A > 0B; B > 1```
 
@@ -20,3 +26,5 @@ _on JFLAP_
 
 ### Preview
 [![asciicast](https://asciinema.org/a/94028.png)](https://asciinema.org/a/94028)
+
+-----------------
