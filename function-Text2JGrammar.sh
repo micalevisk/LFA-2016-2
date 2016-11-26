@@ -10,9 +10,9 @@
 #	Copyright (c) 2016 mllc@icomp.ufam.edu.br; All rights reserved.
 #
 
-
-skillJFlap_path=""
-
+## TODO otimizar para ler da STDIN (leitura de arquivo onde delimitador de regras são as quebras de linha).
+## TODO otimizar para identificar se a entrada está correta.
+## TODO otimizar para formatar as regras de acordo com um tipo específico de gramática.
 
 
 ## Especificação do Formato:
@@ -85,14 +85,14 @@ function Text2JGrammar
 		## Montando linha do objeto <left> (variaveis)
 		variavel="\t\t<left>${arr_regra[0]}</left>&#13;"
 
-		## Montando linha do objeto <right> (sequencias):
+		## Montando linha do objeto <right> (forma sentencial):
 		## Verificar se possui multiplas sequencias e, caso tenha separa-as num array:
-		sequencias="${arr_regra[1]}"
-		if [[ $sequencias =~  ${DELIM_SEQUENCIAS} ]]
+		forma_sentencial="${arr_regra[1]}"
+		if [[ $forma_sentencial =~  ${DELIM_SEQUENCIAS} ]]
 		then
 			IFS=$DELIM_SEQUENCIAS
-			## Separando as sequencias (terminais e variaveis) em um array
-			read -ra arr_sequencias <<< "$sequencias"
+			## Separando as formas sentenciais (terminais e variaveis) em um array
+			read -ra arr_sequencias <<< "$forma_sentencial"
 
 			## Loop para cada sequencia relacionada a mesma variavel
 			for i in ${!arr_sequencias[@]}; do
@@ -101,7 +101,7 @@ function Text2JGrammar
 				arr_sequencias[$i]="\t<production>&#13;\n${variavel}\n${sequencia}\n\t</production>&#13;"
 			done
 
-			REGRA=$(sskillJFlap_joinBy $'\\n' ${arr_sequencias[@]})
+			REGRA=$(skillJFlap_joinBy $'\\n' ${arr_sequencias[@]})
 
 		else
 			sequencia="\t\t<right>${sequencias}</right>&#13;"
