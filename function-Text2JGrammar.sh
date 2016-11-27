@@ -20,6 +20,7 @@ IFS_BKP="$IFS"
 
 ## Especificação do Formato:
 : '
+Por padrão:
 - As implicações (setas) são indicadas por ">"
 - As regras são separadas por ";"
 - O pipe (barra vertical) é indicado por ","
@@ -34,11 +35,11 @@ DELIM_REGRAS=';' # não pode ser '\'
 DELIM_SEQUENCIAS=','
 ################################
 
-#function join_by { local IFS="$1"; shift; echo "$*"; }
-function skillJFlap_joinBy { local d=$1; shift; echo -n "$1"; shift; printf "%s" "${@/#/$d}"; }
+
+
 function Text2JGrammar_help
 {
-	local DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/${FUNCNAME[1]}.sh"
+	local DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/function-${FUNCNAME[1]}.sh"
 	grep -m1 -Pzo "(?<=: '\n)[^']*(?=')" "$DIR"
 }
 
@@ -78,7 +79,7 @@ function Text2JGrammar
 	
 
 	#######################################[ CONSTANTES ]#######################################
-	local TOP="<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><!--Created with Text2JGrammar--><structure>&#13;\n\t<type>grammar</type>&#13;\n\t<!--The list of productions.-->&#13;"
+	local TOP="<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><!--Created with Text2JGrammar v1.26-1--><structure>&#13;\n\t<type>grammar</type>&#13;\n\t<!--The list of productions.-->&#13;"
 	local DOWN="</structure>"
 	############################################################################################
 
@@ -119,18 +120,17 @@ function Text2JGrammar
 		if [[ $forma_sentencial =~ ${DELIM_SEQUENCIAS} ]]
 		then
 			IFS=$DELIM_SEQUENCIAS
+			REGRA=""
 			## Separando as formas sentenciais (terminais e variaveis) em um array
 			read -ra arr_sequencias <<< "$forma_sentencial"
 
 			## Loop para cada sequencia relacionada a mesma variavel
 			for i in ${!arr_sequencias[@]}; do
-				sequencia="${arr_sequencias[$i]}<right/>&#13;"
-				[[ $sequencia =~ $LAMBDA ]] && sequencia="\t\t${sequencia}" || sequencia="\t\t<right>${sequencia}"
-				arr_sequencias[$i]="\t<production>&#13;\n${variavel}\n${sequencia}\n\t</production>&#13;"
+				sequencia="${arr_sequencias[$i]}"
+				[[ $sequencia =~ $LAMBDA ]] && sequencia="\t\t<right/>&#13;" || sequencia="\t\t<right>${sequencia}</right>&#13;"
+				arr_sequencias[$i]="\n\t<production>&#13;\n${variavel}\n${sequencia}\n\t</production>&#13;"
+				REGRA+="${arr_sequencias[$i]}"
 			done
-
-			REGRA=$(skillJFlap_joinBy $'\\n' ${arr_sequencias[@]})
-
 		else
 			sequencia="\t\t<right>${forma_sentencial}</right>&#13;"
 			REGRA="\n\t<production>&#13;\n${variavel}\n${sequencia}\n\t</production>&#13;"
