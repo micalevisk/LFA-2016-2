@@ -1,6 +1,6 @@
 #!/bin/bash
 
-## bashrc="$HOME/.bashrc"	
+## bashrc="$HOME/.bashrc"
 bashrc="/etc/bash.bashrc"
 SKILLS_JFLAP_PATH='/cygdrive/c/Users/user/Documents/GitHub/LFA_feelings'
 
@@ -12,7 +12,7 @@ then
 
 	## Instalação das funções extras para o JFlap (https://github.com/micalevisk/LFA_feelings)
 	export LFA_GITHUB="${SKILLS_JFLAP_PATH}"
-	source "${LFA_GITHUB}/function-Text2JGrammar.sh"
+	source "\${LFA_GITHUB}/function-Text2JGrammar.sh"
 	EOS
 
 	echo 'Feito!'
