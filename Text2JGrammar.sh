@@ -70,7 +70,7 @@ do
 	IFS=$DELIM_REGRAS
 
 	## Definindo variaveis e sequências (separa variavel e sequencia):
-	regra=$(sed -r "s/^(\w+?)${IMPLICACAO}(.+)$/\1${DELIM_REGRAS}\2/" <<< ${regra})
+	regra=$(sed -r "s/^(\.+?)${IMPLICACAO}(.+)$/\1${DELIM_REGRAS}\2/" <<< ${regra})
 	read -ra arr_regra <<< "$regra"
 	[ ${#arr_regra[@]} -ne 2 ] && exit
 

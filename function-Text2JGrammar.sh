@@ -15,6 +15,8 @@
 ## TODO otimizar para identificar se a entrada está correta.
 ## TODO otimizar para formatar as regras de acordo com um tipo específico de gramática.
 
+shopt -s compat31
+IFS_BKP="$IFS"
 
 ## Especificação do Formato:
 : '
@@ -28,7 +30,7 @@
 ########## [KEYWORDS] ##########
 IMPLICACAO='>'
 LAMBDA='§'
-DELIM_REGRAS=';'
+DELIM_REGRAS=';' # não pode ser '\'
 DELIM_SEQUENCIAS=','
 ################################
 
@@ -54,7 +56,7 @@ function Text2JGrammar.changekeywords
 	read -p "alias seta (>): " -n 1 -r IMPLICACAO; echo
 	read -p "alias lambda (§): " -n 1 -r LAMBDA; echo
 	read -p "alias separador de regras (;): " -n 1 -r DELIM_REGRAS; echo
-	read -p "alias separador de sequências  (;): " -n 1 -r DELIM_SEQUENCIAS; echo
+	read -p "alias separador de sequências  (,): " -n 1 -r DELIM_SEQUENCIAS; echo
 	Text2JGrammar_cls
 }
 
@@ -63,7 +65,7 @@ function Text2JGrammar.keywords
 {
 	echo $IMPLICACAO " (significa '->')"
 	echo $LAMBDA " (lambda)"
-	echo $DELIM_REGRAS " (significa quebra de linha)"
+	echo $DELIM_REGRAS " (separa as resgras)"
 	echo $DELIM_SEQUENCIAS " (significa '|')"
 }
 
@@ -89,9 +91,6 @@ function Text2JGrammar
 		Text2JGrammar_cls
 	}
 
-	shopt -s compat31
-	IFS_BKP="$IFS"
-
 	BODY=()
 
 	## Removendo nulos da entrada:
@@ -107,7 +106,7 @@ function Text2JGrammar
 		IFS=$DELIM_REGRAS
 
 		## Definindo variaveis e sequências (separa variavel e sequencia):
-		regra=$(sed -r "s/^(\w+?)${IMPLICACAO}(.+)$/\1${DELIM_REGRAS}\2/" <<< ${regra})
+		regra=$(sed -r "s/^(.+?)${IMPLICACAO}(.+)$/\1${DELIM_REGRAS}\2/" <<< ${regra})
 		read -ra arr_regra <<< "$regra"
 		[ ${#arr_regra[@]} -ne 2 ] && return
 
@@ -117,7 +116,7 @@ function Text2JGrammar
 		## Montando linha do objeto <right> (forma sentencial):
 		## Verificar se possui multiplas sequencias e, caso tenha separa-as num array:
 		forma_sentencial="${arr_regra[1]}"
-		if [[ $forma_sentencial =~  ${DELIM_SEQUENCIAS} ]]
+		if [[ $forma_sentencial =~ ${DELIM_SEQUENCIAS} ]]
 		then
 			IFS=$DELIM_SEQUENCIAS
 			## Separando as formas sentenciais (terminais e variaveis) em um array
@@ -125,15 +124,15 @@ function Text2JGrammar
 
 			## Loop para cada sequencia relacionada a mesma variavel
 			for i in ${!arr_sequencias[@]}; do
-				sequencia="${arr_sequencias[$i]}"
-				[[ $sequencia =~ $LAMBDA ]] && sequencia="\t\t<right/>&#13;" || sequencia="\t\t<right>${sequencia}</right>&#13;"
+				sequencia="${arr_sequencias[$i]}<right/>&#13;"
+				[[ $sequencia =~ $LAMBDA ]] && sequencia="\t\t${sequencia}" || sequencia="\t\t<right>${sequencia}"
 				arr_sequencias[$i]="\t<production>&#13;\n${variavel}\n${sequencia}\n\t</production>&#13;"
 			done
 
 			REGRA=$(skillJFlap_joinBy $'\\n' ${arr_sequencias[@]})
 
 		else
-			sequencia="\t\t<right>${sequencias}</right>&#13;"
+			sequencia="\t\t<right>${forma_sentencial}</right>&#13;"
 			REGRA="\n\t<production>&#13;\n${variavel}\n${sequencia}\n\t</production>&#13;"
 		fi
 
