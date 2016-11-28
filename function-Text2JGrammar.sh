@@ -3,6 +3,9 @@
 #	v1.28-1
 #	Text2JGrammar - Parse PLAIN TEXT para JFLAP Grammar (XML)
 #
+#	Programas utilizados (em ordem de frequência): $ cat function-Text2JGrammar.sh | egrep -o '\w+' | sort | uniq -c |  grep -E '(echo|grep|read|sed)' | sort -hr
+#	echo, read, sed, grep
+#
 #	USE:
 #	$ Text2JGrammar "<texto formatado>" [output-file]
 #
@@ -118,7 +121,7 @@ function Text2JGrammar
 	[[ -z "$entrada" || -z "$arqsaida" ]] && { __Text2JGrammar-help ; return 2; }
 
 	#######################################[ CONSTANTES ]#######################################
-	local TOP="<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><!--Created with Text2JGrammar v1.27-1--><structure>&#13;\n\t<type>grammar</type>&#13;\n\t<!--The list of productions.-->&#13;"
+	local TOP="<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><!--Created with Text2JGrammar v1.28-1--><structure>&#13;\n\t<type>grammar</type>&#13;\n\t<!--The list of productions.-->&#13;"
 	local DOWN="</structure>"
 	############################################################################################
 
