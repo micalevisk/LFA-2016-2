@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#	v1.27-1
+#	v1.28-1
 #	Text2JGrammar - Parse PLAIN TEXT para JFLAP Grammar (XML)
 #
 #	USE:
@@ -21,11 +21,12 @@
 ## FIXME usar get-opt para visualizar o help e definir o arquivo de saída (quando se redireciona a STDIN)
 ## FIXME possibilidade de definição de keywords ao chamar função específica.
 
+## TODO adicionar cores nas mensagens informativas (upper case).
 ## TODO otimizar para ler da STDIN (leitura de arquivo onde delimitador de regras são as quebras de linha).
 ## TODO otimizar para identificar se a entrada está correta.
 ## TODO otimizar para formatar as regras de acordo com um tipo específico de gramática.
 
-# shopt -s compat31
+
 IFS_BKP="$IFS"
 
 ## Especificação do Formato:
@@ -56,7 +57,8 @@ modos de leituras da STDIN
 3)	execute <<< "..."
 4)	execute "..."		(OU execute -opts "...")
 '
-__JSkills-multiSTDIN(){
+__JSkills-multiSTDIN()
+{
 	[[ -n "$1" ]] && echo "$*" || cat -
 }
 
@@ -102,6 +104,7 @@ Text2JGrammar.keywords()
 #########################[ FUNÇÃO PRINCIPAL ]#########################
 function Text2JGrammar
 {
+	[[ $# -lt 2 ]] && { __Text2JGrammar-help ; return 1; }
 
 	local entrada="$(__JSkills-multiSTDIN "${1}")"
 	local arqsaida="${2}"
@@ -112,27 +115,29 @@ function Text2JGrammar
 	# echo "arqsaida=>[${arqsaida}]"
 
 	## FIXME remover daqui e utilizar a opt -h,--help para executar o mesmo comando.
-	[[ -z "$entrada" ]] && { __Text2JGrammar-help ; return 1; }
+	[[ -z "$entrada" || -z "$arqsaida" ]] && { __Text2JGrammar-help ; return 2; }
 
 	#######################################[ CONSTANTES ]#######################################
-	local TOP="<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><!--Created with Text2JGrammar v1.27-1--><structure>&#13;\n\t<type>grammar</type>&#13;\n\t<!--The list of productions.-->&#13;\e[1A"
+	local TOP="<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?><!--Created with Text2JGrammar v1.27-1--><structure>&#13;\n\t<type>grammar</type>&#13;\n\t<!--The list of productions.-->&#13;"
 	local DOWN="</structure>"
 	############################################################################################
 
 
 	[[ -e "$arqsaida" ]] && {
-		read -p "Replace '${arqsaida}' (y)? " -n 1 -r
+		read -p "Replace existing file '${arqsaida}' (y)? " -n 1 -r
 		[[ $REPLY =~ ^[Yy]$ ]] || return 2
 		__Text2JGrammar-cls
 	}
 
 
 	## Removendo brancos da entrada:
-	entrada=$(tr -d '[[:blank:]]' <<< ${entrada})
+	entrada=${entrada//[[:blank:]]/}
 
 	## Separando as regras(em um array):
 	IFS=$DELIM_REGRAS
 	read -ra regras <<< "$entrada"
+
+	PREVIEW="";
 
 	## Tratando as regras:
 	for regra in "${regras[@]}"
@@ -144,41 +149,57 @@ function Text2JGrammar
 		read -ra arr_regra <<< "$regra"
 		[ ${#arr_regra[@]} -ne 2 ] && return
 
-		## Montando linha do objeto <left> (variaveis)
-		variavel="\t\t<left>${arr_regra[0]}</left>&#13;"
+		## Montando linha do objeto <left> (variaveis):
+		variavel_txt="${arr_regra[0]}"
+		variavel="\t\t<left>${variavel_txt}</left>&#13;"
 
 		## Montando linha do objeto <right> (forma sentencial):
 		## Verificar se possui multiplas sequencias e, caso tenha separa-as num array:
-		forma_sentencial="${arr_regra[1]}"
-		if [[ $forma_sentencial =~ ${DELIM_SEQUENCIAS} ]]
+		formaSentencial_txt="${arr_regra[1]}"
+		if [[ $formaSentencial_txt =~ ${DELIM_SEQUENCIAS} ]]
 		then
 			IFS=$DELIM_SEQUENCIAS
 			REGRA=""
 			## Separando as formas sentenciais (terminais e variaveis) em um array
-			read -ra arr_sequencias <<< "$forma_sentencial"
+			read -ra arr_sequencias <<< "$formaSentencial_txt"
 
 			## Loop para cada sequencia relacionada a mesma variavel
 			for i in ${!arr_sequencias[@]}; do
-				sequencia="${arr_sequencias[$i]}"
-				[[ $sequencia =~ $LAMBDA ]] && sequencia="\t\t<right/>&#13;" || sequencia="\t\t<right>${sequencia}</right>&#13;"
+				sequencia_txt="${arr_sequencias[$i]}"
+				[[ $sequencia_txt =~ $LAMBDA ]] && sequencia="\t\t<right/>&#13;" || sequencia="\t\t<right>${sequencia_txt}</right>&#13;"
 				arr_sequencias[$i]="\n\t<production>&#13;\n${variavel}\n${sequencia}\n\t</production>&#13;"
 				REGRA+="${arr_sequencias[$i]}"
+
+				PREVIEW+="${variavel_txt} --> ${sequencia_txt}\n"
 			done
 		else
-			sequencia="\t\t<right>${forma_sentencial}</right>&#13;"
+			sequencia="\t\t<right>${formaSentencial_txt}</right>&#13;"
 			REGRA="\n\t<production>&#13;\n${variavel}\n${sequencia}\n\t</production>&#13;"
+
+			PREVIEW+="${variavel_txt} --> ${formaSentencial_txt}\n"
 		fi
+
 
 		IFS="$IFS_BKP"
 		[[ -n "${REGRA}" ]] && BODY+=(${REGRA})
 	done
 
 
-	## EXIBIR RESULTADO:
-	RESULTADO="$TOP\n${BODY[@]}\n$DOWN"
-	echo -e  "${RESULTADO}"  | tee ${arqsaida}
 
-	IFS="$IFS_BKP"
+
+	## EXIBIR RESULTADO:
+	[[ -z "${PREVIEW}" ]] && { __Text2JGrammar-help ; return 3; }
+	echo -e "COMO FICOU:"
+	echo -e "==========="
+	echo -e "${PREVIEW}"
+	read -p "Está correto? (y)? " -n 1 -r
+	[[ $REPLY =~ ^[Yy]$ ]] || return 4
+	echo -e "\nGRAMÁTICA GERADA COM SUCESSO!"
+
+	RESULTADO="$TOP\n${BODY[@]}\n$DOWN"
+	echo -e  "${RESULTADO}" | sed '4d' > ${arqsaida}	# echo -e  "${RESULTADO}"  | tee ${arqsaida}
+
+
 }
 
 
