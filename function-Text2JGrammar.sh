@@ -173,21 +173,18 @@ function Text2JGrammar
 				arr_sequencias[$i]="\n\t<production>&#13;\n${variavel}\n${sequencia}\n\t</production>&#13;"
 				REGRA+="${arr_sequencias[$i]}"
 
-				PREVIEW+="${variavel_txt} --> ${sequencia_txt}\n"
+				PREVIEW+="${variavel_txt} --> ${sequencia_txt//${LAMBDA}/λ}\n"
 			done
 		else
 			sequencia="\t\t<right>${formaSentencial_txt}</right>&#13;"
 			REGRA="\n\t<production>&#13;\n${variavel}\n${sequencia}\n\t</production>&#13;"
-
-			PREVIEW+="${variavel_txt} --> ${formaSentencial_txt}\n"
+			
+			PREVIEW+="${variavel_txt} --> ${formaSentencial_txt//${LAMBDA}/λ}\n"
 		fi
-
 
 		IFS="$IFS_BKP"
 		[[ -n "${REGRA}" ]] && BODY+=(${REGRA})
 	done
-
-
 
 
 	## EXIBIR RESULTADO:
