@@ -25,6 +25,6 @@ _means:_ ![http://image.prntscr.com/image/a261182c347a4c7daa7694029105d5af.png](
 _on JFLAP_
 
 ### Preview
-[![asciicast](https://asciinema.org/a/94028.png)](https://asciinema.org/a/94028)
+[![asciicast](https://asciinema.org/a/94895.png)](https://asciinema.org/a/94895)
 
 -----------------
