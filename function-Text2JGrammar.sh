@@ -1,13 +1,13 @@
 #!/bin/bash
 #
-#	v1.28-1
+#	v0.24-1
 #	Text2JGrammar - Parse PLAIN TEXT para JFLAP Grammar (XML)
 #
 #	Programas utilizados (em ordem de frequência): $ cat function-Text2JGrammar.sh | egrep -o '\w+' | sort | uniq -c |  grep -E '(echo|grep|read|sed)' | sort -hr
 #	echo, read, sed, grep
 #
 #	USE:
-#	$ Text2JGrammar "<texto formatado>" [output-file]
+#	$ Text2JGrammar "<texto formatado>" <output-file>
 #
 #	EX.:
 #	$ Text2JGrammar "P > 0P,1P,1A; A > 0B; B > 1; B>0" mygrammar.jff
@@ -34,6 +34,7 @@ IFS_BKP="$IFS"
 
 ## Especificação do Formato:
 : '
+- Parâmetros: <texto formatado> <nome do arquivo que conterá o resultado>
 - Para verificar a configuração atual, execute a função "Text2JGrammar.keywords"
 
 Por padrão:
@@ -55,10 +56,10 @@ DELIM_SEQUENCIAS=','
 
 : '
 modos de leituras da STDIN
-1)	echo "..." | execute	(OU cat inputfile | execute)
-2)	execute < inputfile
-3)	execute <<< "..."
-4)	execute "..."		(OU execute -opts "...")
+1) echo "..." | execute	(OU cat inputfile | execute)
+2) execute < inputfile
+3) execute <<< "..."
+4) execute "..."		(OU execute -opts "...")
 '
 __JSkills-multiSTDIN()
 {
@@ -110,7 +111,7 @@ function Text2JGrammar
 	[[ $# -lt 2 ]] && { __Text2JGrammar-help ; return 1; }
 
 	local entrada="$(__JSkills-multiSTDIN "${1}")"
-	local arqsaida="${2}"
+	local arqsaida="${2}.jff"
 	local BODY=()
 
 	# echo "nargs   =>$#"
@@ -178,7 +179,7 @@ function Text2JGrammar
 		else
 			sequencia="\t\t<right>${formaSentencial_txt}</right>&#13;"
 			REGRA="\n\t<production>&#13;\n${variavel}\n${sequencia}\n\t</production>&#13;"
-			
+
 			PREVIEW+="${variavel_txt} --> ${formaSentencial_txt//${LAMBDA}/λ}\n"
 		fi
 
@@ -194,12 +195,11 @@ function Text2JGrammar
 	echo -e "${PREVIEW}"
 	read -p "Está correto? (y)? " -n 1 -r
 	[[ $REPLY =~ ^[Yy]$ ]] || return 4
-	echo -e "\nGRAMÁTICA GERADA COM SUCESSO!"
 
 	RESULTADO="$TOP\n${BODY[@]}\n$DOWN"
 	echo -e  "${RESULTADO}" | sed '4d' > ${arqsaida}	# echo -e  "${RESULTADO}"  | tee ${arqsaida}
 
-
+	echo -e "\nGRAMÁTICA GERADA COM SUCESSO NO ARQUIVO '${arqsaida}'"
 }
 
 
