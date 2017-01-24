@@ -193,7 +193,7 @@ function Text2JGrammar
 	echo -e "COMO FICOU:"
 	echo -e "==========="
 	echo -e "${PREVIEW}"
-	read -p "Está correto? (y)? " -n 1 -r
+	read -p "Está correto? (y)" -n 1 -r
 	[[ $REPLY =~ ^[Yy]$ ]] || return 4
 
 	RESULTADO="$TOP\n${BODY[@]}\n$DOWN"
