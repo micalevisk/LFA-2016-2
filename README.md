@@ -2,7 +2,7 @@
 
 ### to download and change permission (_bash_):
 ```bash
-wget "https://raw.githubusercontent.com/micalevisk/LFA_feelings/master/Text2JGrammar.sh" &&
+wget "https://raw.githubusercontent.com/micalevisk/LFA-2016-2/master/Text2JGrammar.sh" &&
 chmod +x "Text2JGrammar.sh"
 ```
 
